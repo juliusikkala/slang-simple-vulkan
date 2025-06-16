@@ -18,7 +18,7 @@ set(BINDGEN ${CMAKE_CURRENT_SOURCE_DIR}/external/slang-cpu-utils/bindgen/bindgen
 
 add_custom_command(
     OUTPUT vulkan.slang
-    COMMAND ${PYTHON_EXECUTABLE} ${BINDGEN}
+    COMMAND ${Python3_EXECUTABLE} ${BINDGEN}
         ${Vulkan_INCLUDE_DIRS}/vulkan/vulkan.h
         ${Vulkan_INCLUDE_DIRS}/vulkan/vk_platform.h
         ${Vulkan_INCLUDE_DIRS}/vulkan/vulkan_core.h
@@ -34,7 +34,7 @@ add_custom_command(
 
 add_custom_command(
     OUTPUT vulkanmemoryallocator.slang
-    COMMAND ${PYTHON_EXECUTABLE} ${BINDGEN}
+    COMMAND ${Python3_EXECUTABLE} ${BINDGEN}
         ${CMAKE_CURRENT_SOURCE_DIR}/external/VulkanMemoryAllocator/include/vk_mem_alloc.h
         --import vulkan
         --imported ${Vulkan_INCLUDE_DIRS}/vulkan/vulkan.h
@@ -45,7 +45,7 @@ add_custom_command(
 
 add_custom_command(
     OUTPUT sdl2.slang
-    COMMAND ${PYTHON_EXECUTABLE} ${BINDGEN}
+    COMMAND ${Python3_EXECUTABLE} ${BINDGEN}
         ${SDL2_INCLUDE_DIR}/SDL.h
         ${SDL2_INCLUDE_DIR}/SDL_error.h
         ${SDL2_INCLUDE_DIR}/SDL_log.h
@@ -106,8 +106,12 @@ add_library(external-funcs STATIC
 #===============================================================================
 add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/external/slang-cpu-utils/lib" lib)
 
-add_executable(demo main.slang vulkan.slang vulkanmemoryallocator.slang sdl2.slang)
+add_executable(demo main.slang window.slang vulkan.slang vulkanmemoryallocator.slang sdl2.slang gfx.slang)
 add_dependencies(demo bindgen)
+
+# Hack: needed because bindings get generated in the binary dir of CMake
+target_include_directories(demo PUBLIC "${CMAKE_CURRENT_BINARY_DIR}")
+set(CMAKE_Slang_LINK_FLAGS "-I ${CMAKE_CURRENT_BINARY_DIR}")
 
 set_target_properties(demo PROPERTIES LINKER_LANGUAGE Slang)
 target_link_libraries(demo PRIVATE scl)
