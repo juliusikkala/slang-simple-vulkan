@@ -11,7 +11,7 @@ find_package(Vulkan REQUIRED)
 
 #===============================================================================
 # Binding generation; you can run it manually and just save the resulting
-# bindings, but I do it here for portability.
+# bindings, but I do it here to ensure the bindings are always up-to-date.
 #===============================================================================
 find_package(Python3 REQUIRED)
 set(BINDGEN ${CMAKE_CURRENT_SOURCE_DIR}/external/slang-cpu-utils/bindgen/bindgen.py)
@@ -28,6 +28,7 @@ add_custom_command(
         ${Vulkan_INCLUDE_DIRS}/vk_video/vulkan_video_codec_h265std.h
         ${Vulkan_INCLUDE_DIRS}/vk_video/vulkan_video_codec_h265std_encode.h
         ${Vulkan_INCLUDE_DIRS}/vk_video/vulkan_video_codec_h265std_decode.h
+        --define size_t=uintptr_t
         --output vulkan.slang
     COMMENT "Generating Vulkan bindings"
 )
@@ -39,6 +40,7 @@ add_custom_command(
         --import vulkan
         --imported ${Vulkan_INCLUDE_DIRS}/vulkan/vulkan.h
         --imported ${Vulkan_INCLUDE_DIRS}/vulkan/vulkan_core.h
+        --define size_t=uintptr_t
         --output vulkanmemoryallocator.slang
     COMMENT "Generating Vulkan Memory Allocator bindings"
 )
@@ -94,19 +96,60 @@ add_custom_command(
     COMMENT "Generating SDL2 bindings"
 )
 
-add_custom_target(bindgen DEPENDS sdl2.slang vulkan.slang vulkanmemoryallocator.slang)
+add_custom_command(
+    OUTPUT stb_image.slang
+    COMMAND ${Python3_EXECUTABLE} ${BINDGEN}
+        ${CMAKE_CURRENT_SOURCE_DIR}/external/stb/stb_image.h
+        --define size_t=uintptr_t
+        --output stb_image.slang
+    COMMENT "Generating stb_image bindings"
+)
+
+add_custom_target(bindgen DEPENDS sdl2.slang vulkan.slang vulkanmemoryallocator.slang stb_image.slang)
 
 add_library(external-funcs STATIC
     external/vulkan_ext_trampoline.c
     external/vk_mem_alloc.cc
+    external/stb.c
 )
+
+#===============================================================================
+# Building shaders
+#===============================================================================
+function(add_shader target)
+    if(NOT TARGET shaders)
+        add_custom_target(shaders)
+    endif()
+    foreach(source ${ARGN})
+        get_filename_component(shader_bin_name ${source} NAME)
+        string(REPLACE "\." "_" shader_bin_name ${shader_bin_name})
+        string(CONCAT binary ${source} ".spv")
+
+        list(TRANSFORM SHADER_INCLUDE_DIRS PREPEND "-I" OUTPUT_VARIABLE SHADER_INCLUDE_ARGS)
+
+        add_custom_command(
+            OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${binary}
+            COMMAND ${CMAKE_Slang_COMPILER} -fvk-use-gl-layout -fvk-use-entrypoint-name -matrix-layout-row-major -target spirv -O2 ${CMAKE_CURRENT_SOURCE_DIR}/${source} -o ${CMAKE_CURRENT_BINARY_DIR}/${binary} ${SHADER_INCLUDE_ARGS}
+            COMMAND_EXPAND_LISTS
+            MAIN_DEPENDENCY ${CMAKE_CURRENT_SOURCE_DIR}/${source}
+            DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${source}
+            IMPLICIT_DEPENDS Slang ${CMAKE_CURRENT_SOURCE_DIR}/${source}
+            VERBATIM
+        )
+        add_custom_target(${binary}_target DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${binary})
+        add_dependencies(${target} ${binary}_target)
+        add_dependencies(shaders ${binary}_target)
+    endforeach()
+endfunction()
 
 #===============================================================================
 # Building demo executable
 #===============================================================================
 add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/external/slang-cpu-utils/lib" lib)
 
+add_compile_definitions("TARGET_CPU")
 add_executable(demo main.slang window.slang vulkan.slang vulkanmemoryallocator.slang sdl2.slang gfx.slang)
+add_shader(demo visualize.slang)
 add_dependencies(demo bindgen)
 
 # Hack: needed because bindings get generated in the binary dir of CMake

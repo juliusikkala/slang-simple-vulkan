@@ -8,6 +8,7 @@ import platform;
 import list;
 import string;
 import io;
+import stb_image;
 
 #define VK_MAKE_API_VERSION(variant, major, minor, patch) \
     ((((uint32_t)(variant)) << 29U) | (((uint32_t)(major)) << 22U) | (((uint32_t)(minor)) << 12U) | ((uint32_t)(patch)))
@@ -280,6 +281,11 @@ void release(DestroyableVulkanResource<VkShaderModule> r, inout Device dev)
     vkDestroyShaderModule(dev.logicalDevice, r.resource, nullptr);
 }
 
+void release(DestroyableVulkanResource<VkSampler> r, inout Device dev)
+{
+    vkDestroySampler(dev.logicalDevice, r.resource, nullptr);
+}
+
 #define DELETION_QUEUES \
     DELETION_QUEUE(VkBuffer) \
     DELETION_QUEUE(VkCommandBuffer) \
@@ -291,7 +297,8 @@ void release(DestroyableVulkanResource<VkShaderModule> r, inout Device dev)
     DELETION_QUEUE(VkPipelineCache) \
     DELETION_QUEUE(VkPipelineLayout) \
     DELETION_QUEUE(VkQueryPool) \
-    DELETION_QUEUE(VkShaderModule)
+    DELETION_QUEUE(VkShaderModule) \
+    DELETION_QUEUE(VkSampler)
 
 public struct Device: IDroppable
 {
@@ -547,6 +554,7 @@ public struct Device: IDroppable
     {
 #define DELETION_QUEUE(type) \
         if(dq##type.size > 0) return false;
+        DELETION_QUEUES
 #undef DELETION_QUEUE
         return true;
     }
@@ -1228,6 +1236,88 @@ public struct Texture
             dev.submitCommandBufferSync(cmd);
     }
 
+    static private Tuple<int3, VkFormat, Ptr<uint8_t>> _loadImageFile(NativeString path) throws IOError
+    {
+        bool hdr = stbi_is_hdr(path) != 0;
+        stbi_set_flip_vertically_on_load(true);
+
+        Ptr<uint8_t> imgData = nullptr;
+        int dataSize = 0;
+        int channels = 0;
+
+        int2 size = int2(0);
+        VkFormat format;
+        stbi_info(path, &size.x, &size.y, &channels);
+
+        // Three-channel formats are not widely supported.
+        if(channels == 3) channels = 4;
+
+        if(hdr)
+        {
+            imgData = Ptr<uint8_t>(stbi_loadf(path, &size.x, &size.y, nullptr, channels));
+            dataSize = size.x * size.y * channels * 4;
+            if(channels == 1) format = VK_FORMAT_R32_SFLOAT;
+            if(channels == 2) format = VK_FORMAT_R32G32B32_SFLOAT;
+            else format = VK_FORMAT_R32G32B32A32_SFLOAT;
+        }
+        else
+        {
+            imgData = stbi_load(path, &size.x, &size.y, nullptr, channels);
+            dataSize = size.x * size.y * channels;
+            if(channels == 1) format = VK_FORMAT_R8_UNORM;
+            if(channels == 2) format = VK_FORMAT_R8G8_UNORM;
+            else format = VK_FORMAT_R8G8B8A8_UNORM;
+        }
+
+        if(!imgData)
+            throw IOError.Read;
+
+        return makeTuple(int3(size.x, size.y, dataSize), format, imgData);
+    }
+
+    [mutating]
+    public void loadFromFile(inout Device dev, NativeString path, bool mipmapped = true, VkCommandBuffer loadCommands = nullptr)
+        throws IOError
+    {
+        this.drop(dev);
+
+        let imageFile = try _loadImageFile(path);
+        int3 dims = imageFile._0;
+        size = int3(dims.xy, 1);
+        format = imageFile._1;
+        Ptr<uint8_t> imgData = imageFile._2;
+
+        usage = VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_STORAGE_BIT;
+        if(mipmapped)
+            usage = usage|VK_IMAGE_USAGE_TRANSFER_DST_BIT|VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
+        samples = VK_SAMPLE_COUNT_1_BIT;
+        arrayLayers = 1;
+        mipLevels = mipmapped ? uint(floor(log2(max(size.x, size.y)))+1u) : 1;
+
+        let pair = dev.createImage(0, VK_IMAGE_TYPE_2D, usage, format, size, samples, mipLevels);
+        image = pair._0;
+        alloc = pair._1;
+
+        VkCommandBuffer cmd;
+        if(loadCommands) cmd = loadCommands;
+        else cmd = dev.beginCommandBuffer();
+
+        imageMemoryBarrier(
+            cmd, image,
+            VK_IMAGE_LAYOUT_UNDEFINED,
+            VK_IMAGE_LAYOUT_GENERAL
+        );
+        dev.upload(cmd, image, size, imgData, dims.z);
+
+        if(mipmapped)
+            generateMipmaps(cmd, image, size, mipLevels);
+
+        if(!loadCommands)
+            dev.submitCommandBufferSync(cmd);
+
+        stbi_image_free(Ptr<void>(imgData));
+    }
+
     [mutating]
     public void drop(inout Device dev)
     {
@@ -1412,10 +1502,13 @@ public struct SimpleComputePipeline
         size_t pushConstantSize,
         in IArray<uint> specializationConstants,
         expand each T bindings
-    ) where T == VkDescriptorSetLayoutBinding {
+    )
+        throws IOError
+        where T == VkDescriptorSetLayoutBinding
+    {
         VkShaderModule mod = loadShader(dev, shaderPath);
         if(!mod)
-            panic("Failed to load shader %s\n", shaderPath);
+            throw IOError.Read;
         List<VkDescriptorSetLayoutBinding> bindingsList;
         defer bindingsList.drop();
         expand bindingsList.push(each bindings);
@@ -1465,7 +1558,6 @@ public struct SimpleComputePipeline
             Ptr<void>(specializationConstantData.data),
         );
 
-        // TODO create pipelinelayout
         var range = VkPushConstantRange(
             VK_SHADER_STAGE_ALL, 0, (uint32_t)pushConstantSize
         );
