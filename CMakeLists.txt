@@ -148,8 +148,8 @@ endfunction()
 add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/external/slang-cpu-utils/lib" lib)
 
 add_compile_definitions("TARGET_CPU")
-add_executable(demo main.slang window.slang vulkan.slang vulkanmemoryallocator.slang sdl2.slang gfx.slang)
-add_shader(demo visualize.slang)
+add_executable(demo main.slang window.slang vulkan.slang vulkanmemoryallocator.slang sdl2.slang gfx.slang render.slang gather.slang swoosh.slang visualize.slang update.slang)
+add_shader(demo visualize.slang gather.slang update.slang)
 add_dependencies(demo bindgen)
 
 # Hack: needed because bindings get generated in the binary dir of CMake
