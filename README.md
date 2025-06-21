@@ -3,6 +3,8 @@ Simple Vulkan example in Slang
 
 # TODO REPLACE slang-cpu-utils REMOTE WITH https version!!!!
 
+This repo uses submodules, so clone with `--recursive`.
+
 This example program is fully written in Slang. This means that in addition
 to the shaders, the CPU code is also in Slang. The demo loads a compute shader
 and displays a simple animation.
@@ -14,8 +16,25 @@ For background on how this works, please read [slang-cpu-utils/README.md](https:
 
 ## Building
 
+Note that this demo, like [slang-cpu-utils](https://github.com/juliusikkala/slang-cpu-utils/),
+depends on the latest available Slang compiler. You'll need to get the
+[latest release from GitHub](https://github.com/shader-slang/slang), the version
+in the Vulkan SDK is generally too old.
 
 ### Linux
+
+You'll need to install cmake, python, libclang, sdl2 and vulkan from your
+distro's repositories. If you have installed Slang system-wide:
+
+```sh
+cmake -S . -B build
+cmake --build build
+```
+
+If not, you'll need to provide the path to the Slang compiler with
+`cmake -S . -B build -DCMAKE_Slang_COMPILER=/path/to/slangc`.
+
+The executable should then be `build/demo`.
 
 ### Windows
 
@@ -24,9 +43,14 @@ For background on how this works, please read [slang-cpu-utils/README.md](https:
 3. Open "x64 Native Tools Command Prompt for VS 2022" from the Windows start menu
 4. Navigate to the root of this repository.
 5. Run `cmake -S . -B build --preset=default` 
-    - If this doesn't find the Slang compiler, you should give CMake the path to it, so `cmake -G Ninja -S . -B build -DCMAKE_Slang_COMPILER=C:/path/to/your/slang/bin/slangc`.
+    - If this doesn't find the Slang compiler, you should give CMake the path to it, so `cmake -S . -B build --preset=default -DCMAKE_Slang_COMPILER=C:/path/to/your/slang/bin/slangc`.
 6. Run `cmake --build build`
     - If you see a bunch of errors from Slang, it's likely that an old version of Slang was found (e.g. the version that comes with Vulkan SDK). Go back to step 4 and define the path to your newer build.
+
+The executable should then be `build\demo.exe`.
+
+In case you're curious; LLVM is only needed for generating bindings to C
+libraries like Vulkan & SDL.
 
 ## Swoosh splatting
 
@@ -40,7 +64,7 @@ associated with the Khronos group[^1], nearly all of which include one or more
 "Swoosh" shapes.
 
 To alleviate this crucial shortcoming, we[^2] propose a novel representation
-called Swoosh Splatting that is both differentiable and can preserve the sharp
+called "Swoosh Splatting". It is both differentiable and can preserve the sharp
 details associated with swooshes. We demonstrate the suitability of our method
 to Khronos logos by measuring its effectiveness with the
 [Slang](https://shader-slang.org/) logo.[^3]
