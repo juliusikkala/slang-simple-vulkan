@@ -12,6 +12,22 @@ Slang; it's specifically a demo of using Slang on CPU.
 
 For background on how this works, please read [slang-cpu-utils/README.md](https://github.com/juliusikkala/slang-cpu-utils/blob/main/README.md).
 
+## Building
+
+
+### Linux
+
+### Windows
+
+1. Install [CMake](https://cmake.org), [Ninja](https://ninja-build.org), [Visual Studio 2022](https://visualstudio.microsoft.com/vs/) (Community edition is fine, we just need the MSVC compiler from this), [Python](https://www.python.org/), [LLVM](https://releases.llvm.org/) and [VCPKG](https://vcpkg.io/en/).
+2. [Create the `CMakeUserPresets.json` as described here](https://learn.microsoft.com/en-us/vcpkg/get_started/get-started?pivots=shell-powershell#4---build-and-run-the-project)
+3. Open "x64 Native Tools Command Prompt for VS 2022" from the Windows start menu
+4. Navigate to the root of this repository.
+5. Run `cmake -S . -B build --preset=default` 
+    - If this doesn't find the Slang compiler, you should give CMake the path to it, so `cmake -G Ninja -S . -B build -DCMAKE_Slang_COMPILER=C:/path/to/your/slang/bin/slangc`.
+6. Run `cmake --build build`
+    - If you see a bunch of errors from Slang, it's likely that an old version of Slang was found (e.g. the version that comes with Vulkan SDK). Go back to step 4 and define the path to your newer build.
+
 ## Swoosh splatting
 
 While Gaussian splatting has become a mainstay in the field of novel-view

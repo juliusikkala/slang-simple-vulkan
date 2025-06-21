@@ -46,7 +46,7 @@ public struct Window
             SDL_WINDOWPOS_UNDEFINED_MASK,
             SDL_WINDOWPOS_UNDEFINED_MASK,
             size.x, size.y,
-            SDL_WINDOW_SHOWN|SDL_WINDOW_VULKAN
+            uint(SDL_WINDOW_SHOWN|SDL_WINDOW_VULKAN)
         );
         if(!win)
             panic("%s\n", SDL_GetError());
@@ -278,8 +278,7 @@ public struct Window
             surfaceFormat.colorSpace,
             VkExtent2D(swapchainSize.x, swapchainSize.y),
             1,
-            VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT|
-            VK_IMAGE_USAGE_TRANSFER_DST_BIT,
+            uint(VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT|VK_IMAGE_USAGE_TRANSFER_DST_BIT),
             VK_SHARING_MODE_EXCLUSIVE,
             1,
             &queueIndex,
@@ -318,7 +317,7 @@ public struct Window
                     VK_COMPONENT_SWIZZLE_IDENTITY, VK_COMPONENT_SWIZZLE_IDENTITY
                 ),
                 VkImageSubresourceRange(
-                    VK_IMAGE_ASPECT_COLOR_BIT,
+                    uint(VK_IMAGE_ASPECT_COLOR_BIT),
                     0, 1, 0, 1
                 )
             );
@@ -343,7 +342,7 @@ public struct Window
             var fenceInfo = VkFenceCreateInfo(
                 VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
                 nullptr,
-                VK_FENCE_CREATE_SIGNALED_BIT
+                uint(VK_FENCE_CREATE_SIGNALED_BIT)
             );
             vkCreateFence(dev.logicalDevice, &fenceInfo, nullptr, &fence);
             frameFences[i] = fence;

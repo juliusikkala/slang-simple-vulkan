@@ -8,7 +8,10 @@ import string;
 import time;
 import render;
 
-__extern_cpp int system(NativeString command);
+int system(NativeString command)
+{
+    __intrinsic_asm "system($0)";
+}
 
 export __extern_cpp int main(int argc, Ptr<NativeString> argv)
 {

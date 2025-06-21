@@ -141,13 +141,17 @@ public struct Context
             VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT,
             nullptr,
             0,
-            //VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT|
-            VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT|
-            VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT|
-            VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT,
-            VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT|
-            VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT|
-            VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT,
+	    uint(
+                //VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT|
+                VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT|
+                VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT|
+                VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT
+            ),
+	    uint(
+                VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT|
+                VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT|
+                VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT
+            ),
             getDebugCallbackPtr(),
             nullptr
         );
@@ -525,7 +529,7 @@ public struct Device: IDroppable
         allocatorInfo.physicalDevice = physicalDevice;
         allocatorInfo.device = logicalDevice;
         allocatorInfo.instance = ctx.vulkanInstance;
-        allocatorInfo.flags = VMA_ALLOCATOR_CREATE_BUFFER_DEVICE_ADDRESS_BIT;
+        allocatorInfo.flags = uint(VMA_ALLOCATOR_CREATE_BUFFER_DEVICE_ADDRESS_BIT);
         vmaCreateAllocator(&allocatorInfo, &allocator);
 
         var poolInfo = VkCommandPoolCreateInfo(
@@ -601,7 +605,7 @@ public struct Device: IDroppable
         var cmdBeginInfo = VkCommandBufferBeginInfo(
             VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
             nullptr,
-            VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
+            uint(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT),
             nullptr
         );
         vkBeginCommandBuffer(cmd, &cmdBeginInfo);
@@ -633,22 +637,22 @@ public struct Device: IDroppable
         stagingFrame();
     }
 
-    public Tuple<VkBuffer, VmaAllocation> createBuffer(VkBufferUsageFlags usage, size_t size, size_t alignment = 0)
+    public Tuple<VkBuffer, VmaAllocation> createBuffer(VkBufferUsageFlagBits usage, size_t size, size_t alignment = 0)
     {
         var bufferInfo = VkBufferCreateInfo(
             VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
             nullptr,
             0,
             size,
-            usage,
+            uint(usage),
             VK_SHARING_MODE_EXCLUSIVE,
             0,
             nullptr
         );
         var allocInfo = VmaAllocationCreateInfo(
-            VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT,
+            uint(VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT),
             VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE,
-            VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+            uint(VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT),
             0,
             0,
             nullptr,
@@ -666,10 +670,10 @@ public struct Device: IDroppable
     public Tuple<VkImage, VmaAllocation> createImage(
         VkImageCreateFlags flags,
         VkImageType type,
-        VkImageUsageFlags usage,
+        VkImageUsageFlagBits usage,
         VkFormat format,
         uint3 size,
-        VkSampleCountFlagBits samples = VK_SAMPLE_COUNT_1_BIT,
+        VkSampleCountFlagBits samples = VkSampleCountFlagBits(VK_SAMPLE_COUNT_1_BIT),
         uint mipLevels = 1,
         uint arrayLayers = 1
     ){
@@ -684,7 +688,7 @@ public struct Device: IDroppable
             arrayLayers,
             samples,
             VK_IMAGE_TILING_OPTIMAL,
-            usage,
+            uint(usage),
             VK_SHARING_MODE_EXCLUSIVE,
             0,
             nullptr,
@@ -692,9 +696,9 @@ public struct Device: IDroppable
         );
 
         var allocInfo = VmaAllocationCreateInfo(
-            VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT,
+            uint(VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT),
             VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE,
-            VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+            uint(VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT),
             0,
             0,
             nullptr,
@@ -760,15 +764,15 @@ public struct Device: IDroppable
                 nullptr,
                 0,
                 newSize,
-                VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+                uint(VK_BUFFER_USAGE_TRANSFER_SRC_BIT),
                 VK_SHARING_MODE_EXCLUSIVE,
                 0,
                 nullptr
             );
             var allocInfo = VmaAllocationCreateInfo(
-                VMA_ALLOCATION_CREATE_MAPPED_BIT | VMA_ALLOCATION_CREATE_HOST_ACCESS_RANDOM_BIT,
+                uint(VMA_ALLOCATION_CREATE_MAPPED_BIT | VMA_ALLOCATION_CREATE_HOST_ACCESS_RANDOM_BIT),
                 VMA_MEMORY_USAGE_AUTO_PREFER_HOST,
-                VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT,
+                uint(VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT),
                 0,
                 0,
                 nullptr,
@@ -837,7 +841,7 @@ public struct Device: IDroppable
         var copyRegion = VkBufferImageCopy(
             srcOffset,
             0, 0,
-            VkImageSubresourceLayers(VK_IMAGE_ASPECT_COLOR_BIT, mipLevel, arrayLayer, layerCount),
+            VkImageSubresourceLayers(uint(VK_IMAGE_ASPECT_COLOR_BIT), mipLevel, arrayLayer, layerCount),
             VkOffset3D(0,0,0),
             VkExtent3D(extents.x, extents.y, extents.z)
         );
@@ -880,13 +884,13 @@ public struct Device: IDroppable
     [mutating]
     public uint timestampBegin(VkCommandBuffer cmd)
     {
-        return timestampQuery(cmd, VK_PIPELINE_STAGE_2_TOP_OF_PIPE_BIT);
+        return timestampQuery(cmd, uint(VK_PIPELINE_STAGE_2_TOP_OF_PIPE_BIT));
     }
 
     [mutating]
     public uint timestampEnd(VkCommandBuffer cmd)
     {
-        return timestampQuery(cmd, VK_PIPELINE_STAGE_2_BOTTOM_OF_PIPE_BIT);
+        return timestampQuery(cmd, uint(VK_PIPELINE_STAGE_2_BOTTOM_OF_PIPE_BIT));
     }
 
     // Return value is in ms
@@ -926,7 +930,7 @@ public struct Device: IDroppable
                 uint32_t(timestampQueryResults.size*8),
                 Ptr<void>(timestampQueryResults.data + baseIndex),
                 8,
-                VK_QUERY_RESULT_64_BIT
+                uint(VK_QUERY_RESULT_64_BIT)
             );
         }
         vkCmdResetQueryPool(cmd, timestampQueryPool, baseIndex, MAX_TIMER_COUNT);
@@ -967,11 +971,11 @@ public void imageMemoryBarrier(
     uint32_t levelCount = VK_REMAINING_MIP_LEVELS,
     uint32_t baseArrayLayer = 0,
     uint32_t layerCount = VK_REMAINING_ARRAY_LAYERS,
-    VkPipelineStageFlags2 srcStageMask = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT,
-    VkAccessFlags2 srcAccessMask = VK_ACCESS_2_MEMORY_WRITE_BIT | VK_ACCESS_2_MEMORY_READ_BIT | VK_ACCESS_2_SHADER_SAMPLED_READ_BIT | VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT,
-    VkPipelineStageFlags2 dstStageMask = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT,
-    VkAccessFlags2 dstAccessMask = VK_ACCESS_2_MEMORY_WRITE_BIT | VK_ACCESS_2_MEMORY_READ_BIT | VK_ACCESS_2_SHADER_SAMPLED_READ_BIT,
-    VkImageAspectFlags aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+    VkPipelineStageFlags2 srcStageMask = uint(VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT),
+    VkAccessFlags2 srcAccessMask = uint(VK_ACCESS_2_MEMORY_WRITE_BIT | VK_ACCESS_2_MEMORY_READ_BIT | VK_ACCESS_2_SHADER_SAMPLED_READ_BIT | VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT),
+    VkPipelineStageFlags2 dstStageMask = uint(VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT),
+    VkAccessFlags2 dstAccessMask = uint(VK_ACCESS_2_MEMORY_WRITE_BIT | VK_ACCESS_2_MEMORY_READ_BIT | VK_ACCESS_2_SHADER_SAMPLED_READ_BIT),
+    VkImageAspectFlags aspectMask = uint(VK_IMAGE_ASPECT_COLOR_BIT),
 ){
     var imageBarrier = VkImageMemoryBarrier2(
         VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
@@ -1034,10 +1038,10 @@ public void bufferUploadStartBarrier(VkCommandBuffer cmd)
 {
     bufferBarrier(
         cmd,
-        VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT,
-        VK_ACCESS_2_MEMORY_READ_BIT,
-        VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT,
-        VK_ACCESS_2_MEMORY_WRITE_BIT | VK_ACCESS_2_MEMORY_READ_BIT
+        uint(VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT),
+        uint(VK_ACCESS_2_MEMORY_READ_BIT),
+        uint(VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT),
+        uint(VK_ACCESS_2_MEMORY_WRITE_BIT | VK_ACCESS_2_MEMORY_READ_BIT)
     );
 }
 
@@ -1045,10 +1049,10 @@ public void bufferUploadEndBarrier(VkCommandBuffer cmd)
 {
     bufferBarrier(
         cmd,
-        VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT,
-        VK_ACCESS_2_MEMORY_WRITE_BIT | VK_ACCESS_2_MEMORY_READ_BIT,
-        VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT,
-        VK_ACCESS_2_MEMORY_READ_BIT
+        uint(VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT),
+        uint(VK_ACCESS_2_MEMORY_WRITE_BIT | VK_ACCESS_2_MEMORY_READ_BIT),
+        uint(VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT),
+        uint(VK_ACCESS_2_MEMORY_READ_BIT)
     );
 }
 
@@ -1067,9 +1071,9 @@ public void blitImage(
     if(all(srcSize == dstSize) && srcFormat == dstFormat)
     {
         var copy = VkImageCopy(
-            VkImageSubresourceLayers(VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1),
+            VkImageSubresourceLayers(uint(VK_IMAGE_ASPECT_COLOR_BIT), 0, 0, 1),
             VkOffset3D(0,0,0),
-            VkImageSubresourceLayers(VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1),
+            VkImageSubresourceLayers(uint(VK_IMAGE_ASPECT_COLOR_BIT), 0, 0, 1),
             VkOffset3D(0,0,0),
             VkExtent3D(dstSize.x, dstSize.y, dstSize.z)
         );
@@ -1083,9 +1087,9 @@ public void blitImage(
     else
     {
         var blit = VkImageBlit(
-            VkImageSubresourceLayers(VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1),
+            VkImageSubresourceLayers(uint(VK_IMAGE_ASPECT_COLOR_BIT), 0, 0, 1),
             {VkOffset3D(0,0,0), VkOffset3D((int32_t)srcSize.x, (int32_t)srcSize.y, (int32_t)srcSize.z)},
-            VkImageSubresourceLayers(VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1),
+            VkImageSubresourceLayers(uint(VK_IMAGE_ASPECT_COLOR_BIT), 0, 0, 1),
             {VkOffset3D(0,0,0), VkOffset3D((int32_t)dstSize.x, (int32_t)dstSize.y, (int32_t)dstSize.z)}
         );
         vkCmdBlitImage(
@@ -1126,9 +1130,9 @@ public void generateMipmaps(VkCommandBuffer cmd, VkImage image, uint3 size, uint
         for(uint j = 0; j < arrayLayers; ++j)
         {
             var blit = VkImageBlit(
-                VkImageSubresourceLayers(VK_IMAGE_ASPECT_COLOR_BIT, i-1, j, 1),
+                VkImageSubresourceLayers(uint(VK_IMAGE_ASPECT_COLOR_BIT), i-1, j, 1),
                 {VkOffset3D(0,0,0), VkOffset3D((int32_t)size.x, (int32_t)size.y, (int32_t)size.z)},
-                VkImageSubresourceLayers(VK_IMAGE_ASPECT_COLOR_BIT, i, j, 1),
+                VkImageSubresourceLayers(uint(VK_IMAGE_ASPECT_COLOR_BIT), i, j, 1),
                 {VkOffset3D(0,0,0), VkOffset3D((int32_t)nextSize.x, (int32_t)nextSize.y, (int32_t)nextSize.z)}
             );
             vkCmdBlitImage(
@@ -1160,13 +1164,13 @@ VkImageAspectFlags guessAspect(VkFormat format)
     {
     case VK_FORMAT_D16_UNORM:
     case VK_FORMAT_D32_SFLOAT:
-        return VK_IMAGE_ASPECT_DEPTH_BIT;
+        return uint(VK_IMAGE_ASPECT_DEPTH_BIT);
     case VK_FORMAT_D16_UNORM_S8_UINT:
     case VK_FORMAT_D24_UNORM_S8_UINT:
     case VK_FORMAT_D32_SFLOAT_S8_UINT:
-        return VK_IMAGE_ASPECT_DEPTH_BIT|VK_IMAGE_ASPECT_STENCIL_BIT;
+        return uint(VK_IMAGE_ASPECT_DEPTH_BIT|VK_IMAGE_ASPECT_STENCIL_BIT);
     default:
-        return VK_IMAGE_ASPECT_COLOR_BIT;
+        return uint(VK_IMAGE_ASPECT_COLOR_BIT);
     }
 }
 
@@ -1179,7 +1183,7 @@ public struct Texture
     public uint3 size = uint3(0);
     public uint mipLevels = 0;
     public uint arrayLayers = 0;
-    public VkImageUsageFlags usage = 0;
+    public VkImageUsageFlagBits usage = defaultUsage;
     public VkSampleCountFlagBits samples = VK_SAMPLE_COUNT_1_BIT;
     public VkFormat format = VK_FORMAT_UNDEFINED;
 
@@ -1202,7 +1206,7 @@ public struct Texture
         inout Device dev,
         uint3 size,
         VkFormat format,
-        VkImageUsageFlags usage = defaultUsage,
+        VkImageUsageFlagBits usage = defaultUsage,
         VkImageType type = VK_IMAGE_TYPE_2D,
         VkSampleCountFlagBits samples = VK_SAMPLE_COUNT_1_BIT,
         uint mipLevels = 1,
@@ -1334,7 +1338,7 @@ public struct Texture
             alloc = nullptr;
         }
         size = uint3(0);
-        usage = 0;
+        usage = defaultUsage;
         samples = VK_SAMPLE_COUNT_1_BIT;
         format = VK_FORMAT_UNDEFINED;
         mipLevels = 0;
@@ -1463,7 +1467,7 @@ public VkDescriptorSetLayout createDescriptorSetLayout(
     if(flags.size != 0)
         layoutInfo.pNext = Ptr<void>(&flagInfo);
     if(pushDescriptor)
-        layoutInfo.flags = VK_DESCRIPTOR_SET_LAYOUT_CREATE_PUSH_DESCRIPTOR_BIT_KHR;
+        layoutInfo.flags = uint(VK_DESCRIPTOR_SET_LAYOUT_CREATE_PUSH_DESCRIPTOR_BIT_KHR);
 
     VkDescriptorSetLayout layout;
     vkCreateDescriptorSetLayout(dev.logicalDevice, &layoutInfo, nullptr, &layout);
@@ -1476,7 +1480,7 @@ public VkDescriptorSetLayoutBinding bindingSlot(
     uint32_t descriptorCount = 1
 ){
     return VkDescriptorSetLayoutBinding(
-        binding, descriptorType, descriptorCount, VK_SHADER_STAGE_ALL,
+        binding, descriptorType, descriptorCount, uint(VK_SHADER_STAGE_ALL),
         nullptr
     );
 }
@@ -1559,7 +1563,7 @@ public struct SimpleComputePipeline
         );
 
         var range = VkPushConstantRange(
-            VK_SHADER_STAGE_ALL, 0, (uint32_t)pushConstantSize
+            uint(VK_SHADER_STAGE_ALL), 0, (uint32_t)pushConstantSize
         );
         var pipelineLayoutInfo = VkPipelineLayoutCreateInfo(
             VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
@@ -1596,7 +1600,7 @@ public struct SimpleComputePipeline
     public void pushConstants<T>(VkCommandBuffer cmd, T t)
     {
         vkCmdPushConstants(
-            cmd, pipelineLayout, VK_SHADER_STAGE_ALL, 0,
+            cmd, pipelineLayout, uint(VK_SHADER_STAGE_ALL), 0,
             (uint)sizeof(T), Ptr<void>(&t)
         );
     }

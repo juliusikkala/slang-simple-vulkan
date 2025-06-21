@@ -13,12 +13,11 @@ find_package(Vulkan REQUIRED)
 # Binding generation; you can run it manually and just save the resulting
 # bindings, but I do it here to ensure the bindings are always up-to-date.
 #===============================================================================
-find_package(Python3 REQUIRED)
-set(BINDGEN ${CMAKE_CURRENT_SOURCE_DIR}/external/slang-cpu-utils/bindgen/bindgen.py)
+add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/external/slang-cpu-utils/bindgen")
 
 add_custom_command(
     OUTPUT vulkan.slang
-    COMMAND ${Python3_EXECUTABLE} ${BINDGEN}
+    COMMAND ${SLANG_BINDGEN}
         ${Vulkan_INCLUDE_DIRS}/vulkan/vulkan.h
         ${Vulkan_INCLUDE_DIRS}/vulkan/vk_platform.h
         ${Vulkan_INCLUDE_DIRS}/vulkan/vulkan_core.h
@@ -33,21 +32,26 @@ add_custom_command(
     COMMENT "Generating Vulkan bindings"
 )
 
+# Not sure why, but for some reason the VK_DEFINE_HANDLE that got included from
+# vulkan.h just doesn't work in the vk_mem_alloc.h header on Windows. It's
+# perfectly fine on Linux. So we redefine it here anyway.
 add_custom_command(
     OUTPUT vulkanmemoryallocator.slang
-    COMMAND ${Python3_EXECUTABLE} ${BINDGEN}
+    COMMAND ${SLANG_BINDGEN}
         ${CMAKE_CURRENT_SOURCE_DIR}/external/VulkanMemoryAllocator/include/vk_mem_alloc.h
         --import vulkan
         --imported ${Vulkan_INCLUDE_DIRS}/vulkan/vulkan.h
         --imported ${Vulkan_INCLUDE_DIRS}/vulkan/vulkan_core.h
         --define size_t=uintptr_t
+	--include-dir ${Vulkan_INCLUDE_DIRS}
         --output vulkanmemoryallocator.slang
     COMMENT "Generating Vulkan Memory Allocator bindings"
 )
+# --define "VK_DEFINE_HANDLE(object)=typedef struct object##_T* object"
 
 add_custom_command(
     OUTPUT sdl2.slang
-    COMMAND ${Python3_EXECUTABLE} ${BINDGEN}
+    COMMAND ${SLANG_BINDGEN}
         ${SDL2_INCLUDE_DIR}/SDL.h
         ${SDL2_INCLUDE_DIR}/SDL_error.h
         ${SDL2_INCLUDE_DIR}/SDL_log.h
@@ -91,6 +95,7 @@ add_custom_command(
         --import vulkan
         --imported ${Vulkan_INCLUDE_DIRS}/vulkan/vulkan.h
         --imported ${Vulkan_INCLUDE_DIRS}/vulkan/vulkan_core.h
+	--include-dir ${Vulkan_INCLUDE_DIRS}
         --define size_t=uintptr_t
         --output sdl2.slang
     COMMENT "Generating SDL2 bindings"
@@ -98,7 +103,7 @@ add_custom_command(
 
 add_custom_command(
     OUTPUT stb_image.slang
-    COMMAND ${Python3_EXECUTABLE} ${BINDGEN}
+    COMMAND ${SLANG_BINDGEN}
         ${CMAKE_CURRENT_SOURCE_DIR}/external/stb/stb_image.h
         --define size_t=uintptr_t
         --output stb_image.slang
@@ -112,6 +117,10 @@ add_library(external-funcs STATIC
     external/vk_mem_alloc.cc
     external/stb.c
 )
+target_link_libraries(external-funcs PUBLIC Vulkan::Vulkan)
+if (WIN32)
+    set_property(TARGET external-funcs PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded")
+endif ()
 
 #===============================================================================
 # Building shaders
