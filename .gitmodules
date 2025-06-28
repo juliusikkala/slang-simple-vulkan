@@ -1,6 +1,6 @@
 [submodule "external/slang-cpu-utils"]
 	path = external/slang-cpu-utils
-	url = git@github.com:juliusikkala/slang-cpu-utils.git
+	url = https://github.com/juliusikkala/slang-cpu-utils
 [submodule "external/VulkanMemoryAllocator"]
 	path = external/VulkanMemoryAllocator
 	url = https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator.git

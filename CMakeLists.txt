@@ -32,9 +32,6 @@ add_custom_command(
     COMMENT "Generating Vulkan bindings"
 )
 
-# Not sure why, but for some reason the VK_DEFINE_HANDLE that got included from
-# vulkan.h just doesn't work in the vk_mem_alloc.h header on Windows. It's
-# perfectly fine on Linux. So we redefine it here anyway.
 add_custom_command(
     OUTPUT vulkanmemoryallocator.slang
     COMMAND ${SLANG_BINDGEN}
@@ -43,7 +40,7 @@ add_custom_command(
         --imported ${Vulkan_INCLUDE_DIRS}/vulkan/vulkan.h
         --imported ${Vulkan_INCLUDE_DIRS}/vulkan/vulkan_core.h
         --define size_t=uintptr_t
-	--include-dir ${Vulkan_INCLUDE_DIRS}
+        --include-dir ${Vulkan_INCLUDE_DIRS}
         --output vulkanmemoryallocator.slang
     COMMENT "Generating Vulkan Memory Allocator bindings"
 )
@@ -95,7 +92,7 @@ add_custom_command(
         --import vulkan
         --imported ${Vulkan_INCLUDE_DIRS}/vulkan/vulkan.h
         --imported ${Vulkan_INCLUDE_DIRS}/vulkan/vulkan_core.h
-	--include-dir ${Vulkan_INCLUDE_DIRS}
+        --include-dir ${Vulkan_INCLUDE_DIRS}
         --define size_t=uintptr_t
         --output sdl2.slang
     COMMENT "Generating SDL2 bindings"

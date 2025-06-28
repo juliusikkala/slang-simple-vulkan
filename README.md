@@ -1,11 +1,9 @@
-Simple Vulkan example in Slang
+Simple Vulkan sample in Slang
 ==============================
-
-# TODO REPLACE slang-cpu-utils REMOTE WITH https version!!!!
 
 This repo uses submodules, so clone with `--recursive`.
 
-This example program is fully written in Slang. This means that in addition
+This sample program is fully written in Slang. This means that in addition
 to the shaders, the CPU code is also in Slang. The demo loads a compute shader
 and displays a simple animation.
 
@@ -69,6 +67,6 @@ details associated with swooshes. We demonstrate the suitability of our method
 to Khronos logos by measuring its effectiveness with the
 [Slang](https://shader-slang.org/) logo.[^3]
 
-[^1]: This work is neither affiliated nor endorsed by the Khronos group.
+[^1]: This work is neither affiliated with nor endorsed by the Khronos group.
 [^2]: Actually it's just me.
 [^3]: This only requires hours of tuning learning rates to rig our results.
