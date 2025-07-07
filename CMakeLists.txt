@@ -163,5 +163,5 @@ target_include_directories(demo PUBLIC "${CMAKE_CURRENT_BINARY_DIR}")
 set(CMAKE_Slang_LINK_FLAGS "-I ${CMAKE_CURRENT_BINARY_DIR}")
 
 set_target_properties(demo PROPERTIES LINKER_LANGUAGE Slang)
-target_link_libraries(demo PRIVATE scl)
+target_link_libraries(demo PRIVATE scul)
 target_link_libraries(demo PUBLIC SDL2::SDL2 Vulkan::Vulkan external-funcs)
