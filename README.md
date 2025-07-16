@@ -34,6 +34,19 @@ If not, you'll need to provide the path to the Slang compiler with
 
 The executable should then be `build/demo`.
 
+#### Nix
+
+If you use Nix, no need to install Slang or other dependencies; use these
+commands in your clone of this repo to do a reproducible build and run it:
+
+```sh
+nix build       # flakes must be enabled
+result/bin/demo # outside of NixOS, you may need https://github.com/nix-community/nixGL
+```
+
+Alternatively, you can use `nix develop` to enter a shell with all necessary
+dependencies, then run the same `cmake` build commands listed above.
+
 ### Windows
 
 1. Install [CMake](https://cmake.org), [Ninja](https://ninja-build.org), [Visual Studio 2022](https://visualstudio.microsoft.com/vs/) (Community edition is fine, we just need the MSVC compiler from this), [Python](https://www.python.org/), [LLVM](https://releases.llvm.org/) and [VCPKG](https://vcpkg.io/en/).
